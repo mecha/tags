@@ -1,125 +1,71 @@
 # Tags
 
-A command line utility that uses rules to tag directories.
+Tag directories using rules.
 
-# Usage
+# Motivation
 
-When given a path as an argument, `tags` will output the matching tags, one on each line.
+I needed a way to easily identify the contents of a directory, primarly code
+project directories, to perform some contextual actions. After writing this
+logic twice in bash, I decided to turn `tags` into a single-purpose utility
+program; GNU style.
 
-```
-$> tags /home/myself/projects/react-todo-list-app
-js
+Here's some examples of how I use `tags`:
+
+**Run actions**
+
+I use the result of `tags` to populate an [fzf] menu with only entries that
+are relevant to the current directory. For example, inside a Go project
+directory, `fzf` will show entries to build, run, and test the project using
+the `go` command. In a React directory, it will show entries to run the dev
+server, build, update dependencies, etc.
+
+I have this bound to a tmux keymap, giving me global, contextual run actions.
+
+**Shell prompt**
+
+Many shell prompts use their own logic and rules for detecting VCS, languages,
+tools, etc. But I wanted to unify that logic with my run actions.
+
+Tags allows me to have a centralized config for all my rules, and makes
+detection consistent between my run actions and my shell prompt.
+
+# Installation
+
+_TODO_: once initial version is complete
+
+# Getting Started
+
+Running `tags` will output all the tags that match the current directory:
+
+```php
+$ tags
+make
+go
+git
 docker
-tailwind
 ```
 
-The tags are determined using the rules in your [config file](#config). See the next section for more info.
+You may also pass a different directory to get its tags instead:
 
-Note that the tags are processed concurrently, so the output order will differ from run to run. Pipe the result through
-`sort` or another similar utility if you want to have a predictable order.
-
-# Config
-
-The config file uses JSON syntax, and is expected to be in one of these locations, depending on your platform:
-
-- **Linux**: `$XDG_CONFIG_HOME/tags/rules.json`
-- **Windows**: `%APPDATA%/tags/rules.json`
-- **MacOS**: `~/Library/Application Support/tags/rules.json` (untested)
-
-The config should contain a JSON object that maps tag names to their rules. Each rule is also a JSON object that maps
-the [rule type](#rule-types) to its config.
-
-_Example config:_
-
-```json
-{
-  "rust": {
-    "file_exists": "Cargo.toml"
-  },
-  "docker": {
-    "files_exist": ["Dockefile", "docker-compose.yml"]
-  },
-  "tailwindcss": {
-    "file_exists": "tailwind.config.js",
-    "file_contains": {
-      "package.json": "\"tailwindcss\":"
-    }
-  }
-}
+```php
+$ tags some/other/path
+js
+react
+ts
+css
 ```
 
-The rules for a single tag are processed in an `OR` fashion. That is, only a single rule needs to match a directory
-for the tag to be returned. A tag's rules will stop being evaluated after a match has been found.
-
-## Rule Types
-
-### `file_exists`
-
-Matches directories that contain a specific file, or multiple specific files, matched by their name.
-
-_Example:_
-
-```json
-{
-  "go": {
-    "file_exists": "go.mod"
-  },
-  "git": {
-    "file_exists": ".git"
-  },
-  "docker": {
-    "file_exists": ["Dockerfile", "docker-compose.yml"]
-  }
-}
-```
-
-### `file_contains`
-
-Matches directories that contain specific files that also include a piece of text. Note that the text search is
-case-sensitive.
-
-_Example:_
-
-```json
-{
-  "react": {
-    "file_contains": {
-      "package.json": "react",
-      "index.jsx": "react",
-      "index.tsx": "react"
-    }
-  }
-}
-```
-
-### `in_path`
-
-Checks if a directory is in a given path.
-
-_Example:_
-
-```json
-{
-  "wordpress": {
-    "in_path": ["~/sites/wp", "/var/www/"]
-  }
-}
-```
-
-# Troubleshooting
-
-If you're having trouble getting a tag to match correctly, use the `-v` flag to enable verbose output. All verbose
-output is sent over `stderr`.
+Tags are defined using rules, which can be managed using the `tags add` and
+`tags rm`:
 
 ```
-$> tags /some/path -v
-
-Checking docker tag
-=> [file_exists] Dockfile ... no
-
-Checking git tag
-=> [file_exists] .git ... yes
+tags add make file_exists Makefile
+tags add www in_path /var/www/
+tags add react file_contains package.json react
 ```
+
+Tags comes with plenty of bundled help pages. See `tags help` for more
+information.
 
 # License
 
